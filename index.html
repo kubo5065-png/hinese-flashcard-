@@ -217,10 +217,28 @@
 
             const text = vocabulary[currentIndex].word;
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'zh-CN'; // 中国語に設定
+
+            // 利用可能な音声リストを取得
+            const voices = speechSynthesis.getVoices();
+            // 中国語（zh-CN）の音声を探す
+            const chineseVoice = voices.find(voice => voice.lang === 'zh-CN') ||
+                voices.find(voice => voice.lang.includes('zh'));
+
+            if (chineseVoice) {
+                utterance.voice = chineseVoice;
+                utterance.lang = chineseVoice.lang;
+            } else {
+                utterance.lang = 'zh-CN'; // 見つからなくても指定はしておく
+            }
+
             utterance.rate = 0.8; // 少しゆっくり
             speechSynthesis.speak(utterance);
         }
+
+        // 音声リストが読み込まれるのを待つ（特にChrome/Safari用）
+        speechSynthesis.onvoiceschanged = () => {
+            console.log("Voices loaded");
+        };
 
         // 初期化実行
         loadVocabulary();
