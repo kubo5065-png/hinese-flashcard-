@@ -17,6 +17,54 @@
             background-color: #f0f2f5;
         }
 
+        /* メニュー画面のスタイル */
+        #menu {
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .menu-title {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 40px;
+            font-weight: bold;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 0 20px;
+        }
+
+        .menu-btn {
+            padding: 20px;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            background-color: white;
+            color: #007bff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, background-color 0.2s;
+            font-weight: bold;
+        }
+
+        .menu-btn:active {
+            transform: scale(0.98);
+            background-color: #f8f9fa;
+        }
+
+        /* アプリ画面（最初は非表示） */
+        #app {
+            display: none;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         .card {
             background: white;
             width: 90%;
@@ -32,26 +80,18 @@
             padding: 20px;
             cursor: pointer;
             transition: transform 0.2s;
+            margin-bottom: 20px;
         }
 
         .card:active {
             transform: scale(0.98);
         }
 
-        .meaning {
-            font-size: 1.5rem;
-            color: #007bff;
-            margin-bottom: 15px;
-            /* 上に表示するので下マージン */
-            display: none;
-            /* 最初は隠す */
-        }
-
         .word {
             font-size: 3rem;
             font-weight: bold;
             color: #333;
-            margin: 10px 0;
+            margin-bottom: 10px;
         }
 
         .pinyin {
@@ -63,8 +103,16 @@
             /* 最初は隠す */
         }
 
+        .meaning {
+            font-size: 1.5rem;
+            color: #007bff;
+            margin-top: 20px;
+            display: none;
+            /* 最初は隠す */
+        }
+
         .controls {
-            margin-top: 30px;
+            margin-top: 10px;
             display: flex;
             gap: 20px;
         }
@@ -84,6 +132,16 @@
             background-color: #6c757d;
         }
 
+        button.back-btn {
+            background-color: transparent;
+            color: #666;
+            box-shadow: none;
+            padding: 10px;
+            margin-bottom: 10px;
+            align-self: flex-start;
+            margin-left: 5%;
+        }
+
         /* 答えを表示するクラス */
         .show-answer .pinyin,
         .show-answer .meaning {
@@ -94,90 +152,130 @@
 
 <body>
 
-    <div class="card" id="flashcard" onclick="toggleAnswer()">
-        <!-- 順番を変更: 意味 -> 単語 -> ピンイン -->
-        <div class="meaning" id="meaningDisplay">こんにちは</div>
-        <div class="word" id="wordDisplay">你好</div>
-        <div class="pinyin" id="pinyinDisplay">nǐ hǎo</div>
+    <!-- メニュー画面 -->
+    <div id="menu">
+        <div class="menu-title">中国語単語帳</div>
+        <div class="menu-buttons">
+            <button class="menu-btn" onclick="startCategory('noun')">📛 名詞</button>
+            <button class="menu-btn" onclick="startCategory('verb')">🏃‍♂️ 動詞</button>
+            <button class="menu-btn" onclick="startCategory('adj')">✨ 形容詞</button>
+        </div>
     </div>
 
-    <div class="controls">
-        <button class="secondary" onclick="speakWord(event)">🔊 発音</button>
-        <button onclick="nextWord(event)">次へ ➡</button>
+    <!-- アプリ画面 -->
+    <div id="app" style="display: none;">
+        <button class="back-btn" onclick="showMenu()">⬅ メニューに戻る</button>
+
+        <div class="card" id="flashcard" onclick="toggleAnswer()">
+            <!-- 順番を変更: 意味 -> 単語 -> ピンイン -->
+            <div class="meaning" id="meaningDisplay">こんにちは</div>
+            <div class="word" id="wordDisplay">你好</div>
+            <div class="pinyin" id="pinyinDisplay">nǐ hǎo</div>
+        </div>
+
+        <div class="controls">
+            <button class="secondary" onclick="speakWord(event)">🔊 発音</button>
+            <button onclick="nextWord(event)">次へ ➡</button>
+        </div>
     </div>
 
     <script>
-        // GoogleスプレッドシートのCSV公開URL
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSp0L2zrFkUsmtg0ypB9415mTJESb4FXXyXTYFMP-5JIEfdcKhlioH9Q_TSeYVvb62yIAM7jCCfo47m/pub?gid=0&single=true&output=csv';
+        // カテゴリごとのスプレッドシートURL（★後で正しいURLに書き換えます）
+        // 現在はすべて同じURL（名詞シート）を入れています
+        const CATEGORY_URLS = {
+            noun: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSp0L2zrFkUsmtg0ypB9415mTJESb4FXXyXTYFMP-5JIEfdcKhlioH9Q_TSeYVvb62yIAM7jCCfo47m/pub?gid=0&single=true&output=csv',
+            verb: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSp0L2zrFkUsmtg0ypB9415mTJESb4FXXyXTYFMP-5JIEfdcKhlioH9Q_TSeYVvb62yIAM7jCCfo47m/pub?gid=744521802&single=true&output=csv',
+            adj: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSp0L2zrFkUsmtg0ypB9415mTJESb4FXXyXTYFMP-5JIEfdcKhlioH9Q_TSeYVvb62yIAM7jCCfo47m/pub?gid=2137241940&single=true&output=csv'
+        };
+
         // CORS回避用プロキシ
         const PROXY_URL = 'https://api.allorigins.win/raw?url=';
 
-        // サンプルデータ（スプレッドシートが空の時用）
+        // サンプルデータ
         const defaultData = [
             { word: "你好", pinyin: "nǐ hǎo", meaning: "こんにちは" },
-            { word: "谢谢", pinyin: "xiè xie", meaning: "ありがとう" },
-            { word: "猫", pinyin: "māo", meaning: "猫" },
-            { word: "啤酒", pinyin: "pí jiǔ", meaning: "ビール" },
-            { word: "如果不努力", pinyin: "rú guǒ bù nǔ lì", meaning: "もし努力しなければ" }
+            { word: "谢谢", pinyin: "xiè xie", meaning: "ありがとう" }
         ];
 
         let vocabulary = [];
         let currentIndex = 0;
 
+        const menuScreen = document.getElementById('menu');
+        const appScreen = document.getElementById('app');
         const card = document.getElementById('flashcard');
         const wordDisplay = document.getElementById('wordDisplay');
         const pinyinDisplay = document.getElementById('pinyinDisplay');
         const meaningDisplay = document.getElementById('meaningDisplay');
 
+        // カテゴリを選択して学習開始
+        function startCategory(category) {
+            const url = CATEGORY_URLS[category];
+            if (!url) {
+                alert("このカテゴリは準備中です");
+                return;
+            }
+
+            // 画面切り替え
+            menuScreen.style.display = 'none';
+            appScreen.style.display = 'flex';
+
+            // データ読み込み
+            loadVocabulary(url);
+        }
+
+        // メニューに戻る
+        function showMenu() {
+            appScreen.style.display = 'none';
+            menuScreen.style.display = 'block';
+            // データをリセットしても良いが、今回はそのまま
+        }
+
         // CSVデータを取得してパースする関数
-        async function loadVocabulary() {
+        async function loadVocabulary(sheetUrl) {
+            vocabulary = []; // リセット
+            wordDisplay.textContent = "読み込み中...";
+            meaningDisplay.style.display = "none";
+            pinyinDisplay.style.display = "none";
+
             try {
-                wordDisplay.textContent = "読み込み中...";
                 // プロキシを経由してアクセス
-                const response = await fetch(PROXY_URL + encodeURIComponent(SHEET_URL));
+                const response = await fetch(PROXY_URL + encodeURIComponent(sheetUrl));
                 if (!response.ok) throw new Error('Network response was not ok');
                 const text = await response.text();
                 vocabulary = parseCSV(text);
 
                 if (vocabulary.length > 0) {
+                    currentIndex = 0;
                     updateCard();
                 } else {
-                    // データがない場合はサンプルデータを表示
-                    console.log("Spreadsheet is empty, using default data.");
-                    vocabulary = defaultData;
-                    updateCard();
-                    // ユーザーに通知
-                    meaningDisplay.textContent = "※サンプルデータを表示中";
-                    meaningDisplay.style.display = "block";
-                    setTimeout(() => {
-                        if (!card.classList.contains('show-answer')) {
-                            meaningDisplay.style.display = "none";
-                        }
-                    }, 2000);
+                    useDefaultData("データがありません");
                 }
             } catch (error) {
                 console.error('Error loading CSV:', error);
-                // エラー時もサンプルデータを表示
-                vocabulary = defaultData;
-                updateCard();
-                meaningDisplay.textContent = "※読み込み失敗：サンプルデータ";
-                meaningDisplay.style.display = "block";
+                useDefaultData("読み込みエラー");
             }
+        }
+
+        function useDefaultData(message) {
+            console.log(message + ", using default data.");
+            vocabulary = defaultData;
+            currentIndex = 0;
+            updateCard();
+            meaningDisplay.textContent = "※サンプルデータを表示中";
+            meaningDisplay.style.display = "block";
         }
 
         // 簡易CSVパーサー
         function parseCSV(csvText) {
             const lines = csvText.trim().split('\n');
-            // 1行目はヘッダーと想定 (word, pinyin, meaning)
             const headers = lines[0].split(',').map(h => h.trim());
 
             return lines.slice(1)
-                .filter(line => line.trim() !== '') // 空行を除外
+                .filter(line => line.trim() !== '')
                 .map(line => {
                     const values = line.split(',');
                     const entry = {};
                     headers.forEach((header, index) => {
-                        // 値が存在しない場合は空文字を入れる
                         entry[header] = values[index] ? values[index].trim() : '';
                     });
                     return entry;
@@ -191,7 +289,7 @@
             wordDisplay.textContent = currentItem.word;
             pinyinDisplay.textContent = currentItem.pinyin;
             meaningDisplay.textContent = currentItem.meaning;
-            card.classList.remove('show-answer'); // 新しい単語になったら答えを隠す
+            card.classList.remove('show-answer');
         }
 
         // 答えの表示/非表示を切り替え
@@ -201,9 +299,9 @@
 
         // 次の単語へ
         function nextWord(event) {
-            if (event) event.stopPropagation(); // カード自体のクリックイベントを止める
+            if (event) event.stopPropagation();
             if (vocabulary.length === 0) return;
-            currentIndex = (currentIndex + 1) % vocabulary.length; // リストの最後まで行ったら最初に戻る
+            currentIndex = (currentIndex + 1) % vocabulary.length;
             updateCard();
         }
 
@@ -212,15 +310,12 @@
             if (event) event.stopPropagation();
             if (vocabulary.length === 0) return;
 
-            // ★発音ボタンを押したら答えを表示する
             card.classList.add('show-answer');
 
             const text = vocabulary[currentIndex].word;
             const utterance = new SpeechSynthesisUtterance(text);
 
-            // 利用可能な音声リストを取得
             const voices = speechSynthesis.getVoices();
-            // 中国語（zh-CN）の音声を探す
             const chineseVoice = voices.find(voice => voice.lang === 'zh-CN') ||
                 voices.find(voice => voice.lang.includes('zh'));
 
@@ -228,20 +323,17 @@
                 utterance.voice = chineseVoice;
                 utterance.lang = chineseVoice.lang;
             } else {
-                utterance.lang = 'zh-CN'; // 見つからなくても指定はしておく
+                utterance.lang = 'zh-CN';
             }
 
-            utterance.rate = 0.8; // 少しゆっくり
+            utterance.rate = 0.8;
             speechSynthesis.speak(utterance);
         }
 
-        // 音声リストが読み込まれるのを待つ（特にChrome/Safari用）
+        // 音声リスト読み込み待機
         speechSynthesis.onvoiceschanged = () => {
             console.log("Voices loaded");
         };
-
-        // 初期化実行
-        loadVocabulary();
     </script>
 </body>
 
