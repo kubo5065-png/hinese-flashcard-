@@ -289,12 +289,25 @@
             wordDisplay.textContent = currentItem.word;
             pinyinDisplay.textContent = currentItem.pinyin;
             meaningDisplay.textContent = currentItem.meaning;
+            
+            // 新しいカードになったら答えを隠す
             card.classList.remove('show-answer');
+            meaningDisplay.style.display = 'none';
+            pinyinDisplay.style.display = 'none';
         }
 
         // 答えの表示/非表示を切り替え
         function toggleAnswer() {
-            card.classList.toggle('show-answer');
+            const isHidden = meaningDisplay.style.display === 'none' || meaningDisplay.style.display === '';
+            if (isHidden) {
+                meaningDisplay.style.display = 'block';
+                pinyinDisplay.style.display = 'block';
+                card.classList.add('show-answer');
+            } else {
+                meaningDisplay.style.display = 'none';
+                pinyinDisplay.style.display = 'none';
+                card.classList.remove('show-answer');
+            }
         }
 
         // 次の単語へ
@@ -310,7 +323,10 @@
             if (event) event.stopPropagation();
             if (vocabulary.length === 0) return;
 
+            // 発音時は答えを表示する
             card.classList.add('show-answer');
+            meaningDisplay.style.display = 'block';
+            pinyinDisplay.style.display = 'block';
 
             const text = vocabulary[currentIndex].word;
             const utterance = new SpeechSynthesisUtterance(text);
