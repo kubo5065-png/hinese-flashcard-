@@ -114,11 +114,14 @@
         .controls {
             margin-top: 10px;
             display: flex;
-            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            padding: 0 16px;
         }
 
         button {
-            padding: 15px 30px;
+            padding: 14px 22px;
             font-size: 1rem;
             border: none;
             border-radius: 50px;
@@ -174,6 +177,7 @@
         </div>
 
         <div class="controls">
+            <button onclick="previousWord(event)">⬅ 戻る</button>
             <button class="secondary" onclick="speakWord(event)">🔊 発音</button>
             <button onclick="nextWord(event)">次へ ➡</button>
         </div>
@@ -338,6 +342,14 @@
             if (event) event.stopPropagation();
             if (vocabulary.length === 0) return;
             currentIndex = (currentIndex + 1) % vocabulary.length;
+            updateCard();
+        }
+
+        // 前の単語へ
+        function previousWord(event) {
+            if (event) event.stopPropagation();
+            if (vocabulary.length === 0) return;
+            currentIndex = (currentIndex - 1 + vocabulary.length) % vocabulary.length;
             updateCard();
         }
 
