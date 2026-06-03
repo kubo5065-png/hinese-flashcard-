@@ -190,6 +190,7 @@
 
         // CORS回避用プロキシ
         const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+        const FETCH_TIMEOUT_MS = 8000;
 
         // サンプルデータ
         const defaultData = [
@@ -238,10 +239,7 @@
             pinyinDisplay.style.display = "none";
 
             try {
-                // プロキシを経由してアクセス
-                const response = await fetch(PROXY_URL + encodeURIComponent(sheetUrl));
-                if (!response.ok) throw new Error('Network response was not ok');
-                const text = await response.text();
+                const text = await fetchCSVText(sheetUrl);
                 vocabulary = parseCSV(text);
 
                 if (vocabulary.length > 0) {
@@ -256,13 +254,38 @@
             }
         }
 
+        async function fetchCSVText(sheetUrl) {
+            const urls = [
+                sheetUrl,
+                PROXY_URL + encodeURIComponent(sheetUrl)
+            ];
+
+            let lastError;
+            for (const url of urls) {
+                try {
+                    const response = await fetchWithTimeout(url, FETCH_TIMEOUT_MS);
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return await response.text();
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+            throw lastError;
+        }
+
+        function fetchWithTimeout(url, timeoutMs) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+            return fetch(url, { signal: controller.signal })
+                .finally(() => clearTimeout(timeoutId));
+        }
+
         function useDefaultData(message) {
             console.log(message + ", using default data.");
             vocabulary = defaultData;
             currentIndex = 0;
             updateCard();
-            meaningDisplay.textContent = "※サンプルデータを表示中";
-            meaningDisplay.style.display = "block";
         }
 
         // 簡易CSVパーサー
@@ -289,7 +312,7 @@
             wordDisplay.textContent = currentItem.word;
             pinyinDisplay.textContent = currentItem.pinyin;
             meaningDisplay.textContent = currentItem.meaning;
-            
+
             // 新しいカードになったら答えを隠す
             card.classList.remove('show-answer');
             meaningDisplay.style.display = 'none';
