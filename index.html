@@ -261,9 +261,10 @@
         }
 
         async function fetchCSVText(sheetUrl) {
+            const cacheBustedUrl = sheetUrl + (sheetUrl.includes('?') ? '&' : '?') + 'cacheBust=' + Date.now();
             const urls = [
-                sheetUrl,
-                PROXY_URL + encodeURIComponent(sheetUrl)
+                cacheBustedUrl,
+                PROXY_URL + encodeURIComponent(cacheBustedUrl)
             ];
 
             let lastError;
