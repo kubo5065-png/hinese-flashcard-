@@ -297,7 +297,7 @@
         // 簡易CSVパーサー
         function parseCSV(csvText) {
             const lines = csvText.trim().split('\n');
-            const headers = lines[0].split(',').map(h => h.trim().replace(/^\uFEFF/, ''));
+            const headers = lines[0].split(',').map(h => h.trim().replace(String.fromCharCode(65279), ''));
 
             return lines.slice(1)
                 .filter(line => line.trim() !== '')
