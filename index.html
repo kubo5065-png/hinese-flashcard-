@@ -12,8 +12,10 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 24px 0;
+            box-sizing: border-box;
             background-color: #f0f2f5;
         }
 
@@ -21,14 +23,85 @@
         #menu {
             text-align: center;
             width: 100%;
-            max-width: 400px;
+            max-width: 430px;
         }
 
         .menu-title {
             font-size: 2.5rem;
             color: #333;
-            margin-bottom: 40px;
+            margin-bottom: 24px;
             font-weight: bold;
+        }
+
+        .search-box {
+            margin: 0 20px 24px;
+        }
+
+        #searchInput {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 16px 18px;
+            font-size: 1.1rem;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            background: white;
+            color: #333;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            outline: none;
+        }
+
+        #searchInput:focus {
+            border-color: #007bff;
+        }
+
+        .search-status {
+            min-height: 20px;
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: #666;
+            text-align: left;
+        }
+
+        .search-results {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 220px;
+            margin-top: 8px;
+            overflow-y: auto;
+        }
+
+        .search-result {
+            width: 100%;
+            padding: 12px 14px;
+            border: none;
+            border-radius: 10px;
+            background: white;
+            color: #333;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .search-result-word {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .search-result-meaning {
+            display: block;
+            margin-top: 4px;
+            color: #007bff;
+            line-height: 1.35;
+        }
+
+        .search-result-meta {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.82rem;
+            color: #777;
         }
 
         .menu-buttons {
@@ -158,6 +231,11 @@
     <!-- メニュー画面 -->
     <div id="menu">
         <div class="menu-title">中国語単語帳</div>
+        <div class="search-box">
+            <input id="searchInput" type="search" placeholder="日本語で検索" autocomplete="off">
+            <div class="search-status" id="searchStatus"></div>
+            <div class="search-results" id="searchResults"></div>
+        </div>
         <div class="menu-buttons">
             <button class="menu-btn" onclick="startCategory('noun')">📛 名詞</button>
             <button class="menu-btn" onclick="startCategory('verb')">🏃‍♂️ 動詞</button>
@@ -194,6 +272,13 @@
             phrase: 'https://docs.google.com/spreadsheets/d/1Jo9cdFYuCQpBCCkIHb2HK3lotFDehg72yY_48ZdhkjU/export?format=csv&gid=1766247776'
         };
 
+        const CATEGORY_LABELS = {
+            noun: '名詞',
+            verb: '動詞',
+            adj: '形容詞',
+            phrase: 'フレーズ'
+        };
+
         // CORS回避用プロキシ
         const PROXY_URL = 'https://api.allorigins.win/raw?url=';
         const FETCH_TIMEOUT_MS = 8000;
@@ -206,6 +291,9 @@
 
         let vocabulary = [];
         let currentIndex = 0;
+        let allVocabularyCache = null;
+        let currentSearchResults = [];
+        let searchTimer = null;
 
         const menuScreen = document.getElementById('menu');
         const appScreen = document.getElementById('app');
@@ -213,6 +301,14 @@
         const wordDisplay = document.getElementById('wordDisplay');
         const pinyinDisplay = document.getElementById('pinyinDisplay');
         const meaningDisplay = document.getElementById('meaningDisplay');
+        const searchInput = document.getElementById('searchInput');
+        const searchStatus = document.getElementById('searchStatus');
+        const searchResults = document.getElementById('searchResults');
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(runSearch, 250);
+        });
 
         // カテゴリを選択して学習開始
         function startCategory(category) {
@@ -235,6 +331,97 @@
             appScreen.style.display = 'none';
             menuScreen.style.display = 'block';
             // データをリセットしても良いが、今回はそのまま
+        }
+
+        async function runSearch() {
+            const query = searchInput.value.trim();
+            currentSearchResults = [];
+            searchResults.innerHTML = '';
+
+            if (!query) {
+                searchStatus.textContent = '';
+                return;
+            }
+
+            searchStatus.textContent = '検索中...';
+
+            try {
+                const allVocabulary = await loadAllVocabulary();
+                currentSearchResults = allVocabulary
+                    .filter(item => (item.meaning || '').includes(query))
+                    .slice(0, 30);
+
+                renderSearchResults(query);
+            } catch (error) {
+                console.error('Error searching vocabulary:', error);
+                searchStatus.textContent = '検索できませんでした';
+            }
+        }
+
+        async function loadAllVocabulary() {
+            if (allVocabularyCache) return allVocabularyCache;
+
+            const results = await Promise.allSettled(
+                Object.entries(CATEGORY_URLS).map(async ([category, url]) => {
+                    const text = await fetchCSVText(url);
+                    return parseCSV(text)
+                        .filter(item => item.word && item.meaning)
+                        .map(item => ({
+                            ...item,
+                            category,
+                            categoryLabel: CATEGORY_LABELS[category] || category
+                        }));
+                })
+            );
+
+            allVocabularyCache = results.flatMap(result => (
+                result.status === 'fulfilled' ? result.value : []
+            ));
+
+            return allVocabularyCache;
+        }
+
+        function renderSearchResults(query) {
+            searchResults.innerHTML = '';
+
+            if (currentSearchResults.length === 0) {
+                searchStatus.textContent = '見つかりませんでした';
+                return;
+            }
+
+            searchStatus.textContent = `${currentSearchResults.length}件`;
+
+            currentSearchResults.forEach((item, index) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'search-result';
+                button.addEventListener('click', () => openSearchResult(index));
+
+                const word = document.createElement('span');
+                word.className = 'search-result-word';
+                word.textContent = item.word;
+
+                const meaning = document.createElement('span');
+                meaning.className = 'search-result-meaning';
+                meaning.textContent = item.meaning;
+
+                const meta = document.createElement('span');
+                meta.className = 'search-result-meta';
+                meta.textContent = `${item.pinyin || ''} / ${item.categoryLabel}`;
+
+                button.appendChild(word);
+                button.appendChild(meaning);
+                button.appendChild(meta);
+                searchResults.appendChild(button);
+            });
+        }
+
+        function openSearchResult(index) {
+            vocabulary = currentSearchResults;
+            currentIndex = index;
+            menuScreen.style.display = 'none';
+            appScreen.style.display = 'flex';
+            updateCard();
         }
 
         // CSVデータを取得してパースする関数
