@@ -241,6 +241,11 @@
             <button class="menu-btn" onclick="startCategory('verb')">🏃‍♂️ 動詞</button>
             <button class="menu-btn" onclick="startCategory('adj')">✨ 形容詞</button>
             <button class="menu-btn" onclick="startCategory('phrase')">💬 フレーズ</button>
+            <button class="menu-btn" onclick="startCategory('pronoun')">🧍 代名詞</button>
+            <button class="menu-btn" onclick="startCategory('adverb')">⏱ 副詞</button>
+            <button class="menu-btn" onclick="startCategory('conjunction')">🔗 接続詞</button>
+            <button class="menu-btn" onclick="startCategory('question')">❓ 疑問詞</button>
+            <button class="menu-btn" onclick="startCategory('particle')">🧩 助詞</button>
         </div>
     </div>
 
@@ -269,14 +274,24 @@
             noun: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSp0L2zrFkUsmtg0ypB9415mTJESb4FXXyXTYFMP-5JIEfdcKhlioH9Q_TSeYVvb62yIAM7jCCfo47m/pub?gid=0&single=true&output=csv',
             verb: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSp0L2zrFkUsmtg0ypB9415mTJESb4FXXyXTYFMP-5JIEfdcKhlioH9Q_TSeYVvb62yIAM7jCCfo47m/pub?gid=744521802&single=true&output=csv',
             adj: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSp0L2zrFkUsmtg0ypB9415mTJESb4FXXyXTYFMP-5JIEfdcKhlioH9Q_TSeYVvb62yIAM7jCCfo47m/pub?gid=2137241940&single=true&output=csv',
-            phrase: 'https://docs.google.com/spreadsheets/d/1Jo9cdFYuCQpBCCkIHb2HK3lotFDehg72yY_48ZdhkjU/export?format=csv&gid=1766247776'
+            phrase: 'https://docs.google.com/spreadsheets/d/1Jo9cdFYuCQpBCCkIHb2HK3lotFDehg72yY_48ZdhkjU/export?format=csv&gid=1766247776',
+            pronoun: 'https://docs.google.com/spreadsheets/d/1Jo9cdFYuCQpBCCkIHb2HK3lotFDehg72yY_48ZdhkjU/export?format=csv&gid=13168003',
+            adverb: 'https://docs.google.com/spreadsheets/d/1Jo9cdFYuCQpBCCkIHb2HK3lotFDehg72yY_48ZdhkjU/export?format=csv&gid=1796733208',
+            conjunction: 'https://docs.google.com/spreadsheets/d/1Jo9cdFYuCQpBCCkIHb2HK3lotFDehg72yY_48ZdhkjU/export?format=csv&gid=344574070',
+            question: 'https://docs.google.com/spreadsheets/d/1Jo9cdFYuCQpBCCkIHb2HK3lotFDehg72yY_48ZdhkjU/export?format=csv&gid=1844652962',
+            particle: 'https://docs.google.com/spreadsheets/d/1Jo9cdFYuCQpBCCkIHb2HK3lotFDehg72yY_48ZdhkjU/export?format=csv&gid=1093785986'
         };
 
         const CATEGORY_LABELS = {
             noun: '名詞',
             verb: '動詞',
             adj: '形容詞',
-            phrase: 'フレーズ'
+            phrase: 'フレーズ',
+            pronoun: '代名詞',
+            adverb: '副詞',
+            conjunction: '接続詞',
+            question: '疑問詞',
+            particle: '助詞'
         };
 
         // CORS回避用プロキシ
